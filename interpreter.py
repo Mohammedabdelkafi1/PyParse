@@ -1,5 +1,5 @@
 # Credits to Dripkap for being my first star
-x = input("Xinter ==> ")
+x = input("PyParse > ")
 PLUS = "PLUS"
 MINUS = "MINUS"
 DIV = "DIVISION"
