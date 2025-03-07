@@ -1,3 +1,4 @@
+# Credits to Dripkap for being my first star
 x = input("Xinter ==> ")
 PLUS = "PLUS"
 MINUS = "MINUS"
