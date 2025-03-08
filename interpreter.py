@@ -1,4 +1,4 @@
-# Credits to Dripkap for being my first star
+# Credits to Dripkap and stier for being my first stars
 x = input("PyParse > ")
 PLUS = "PLUS"
 MINUS = "MINUS"
