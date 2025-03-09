@@ -1,15 +1,21 @@
 # Credits to Dripkap and stier for being my first stars
 x = input("PyParse > ")
+
 PLUS = "PLUS"
 MINUS = "MINUS"
 DIV = "DIVISION"
 MUL = "MULTIPLICATION"
-nums = "1234567890"
 OPAREN = "LPAREN"
 CPAREN = "RPAREN"
-letters = "azertyuiopqsdfghjklmwxcvbn"
-illegalchars="ã░☻╚æ"
-string=False
+EQUALS = "EQUALS"
+NUMBER = "NUMBER"
+STRING = "STRING"
+LOG = "LOG"
+
+nums = "1234567890"
+letters = "abcdefghijklmnopqrstuvwxyz"
+illegalchars = "ã░☻╚æ"
+
 class Lexer:
     def __init__(self, text):
         self.text = text
@@ -29,30 +35,30 @@ class Lexer:
             elif self.curr_char.isspace():
                 self.advance()
             elif self.curr_char == "+":
-                self.tokens.append(PLUS)
+                self.tokens.append((PLUS, "+"))
                 self.advance()
             elif self.curr_char == "-":
-                self.tokens.append(MINUS)
+                self.tokens.append((MINUS, "-"))
                 self.advance()
             elif self.curr_char == "/":
-                self.tokens.append(DIV)
+                self.tokens.append((DIV, "/"))
                 self.advance()
             elif self.curr_char == "*":
-                self.tokens.append(MUL)
+                self.tokens.append((MUL, "*"))
                 self.advance()
             elif self.curr_char == "(":
-                self.tokens.append(OPAREN)
+                self.tokens.append((OPAREN, "("))
                 self.advance()
             elif self.curr_char == ")":
-                self.tokens.append(CPAREN)
+                self.tokens.append((CPAREN, ")"))
                 self.advance()
-            elif self.curr_char=="=":
-                self.tokens.append("EQUALS")
+            elif self.curr_char == "=":
+                self.tokens.append((EQUALS, "="))
                 self.advance()
-            elif self.curr_char in letters and string==False:
+            elif self.curr_char in letters:
                 self.tokens.append(self._parse_stmt())
             elif self.curr_char in nums or self.curr_char == ".":
-                self.tokens.append(self._parse_number())
+                self.tokens.append((NUMBER, self._parse_number()))
             else:
                 raise ValueError(f"Unexpected character: {self.curr_char}")
         return self.tokens
@@ -78,7 +84,11 @@ class Lexer:
         while self.curr_char is not None and self.curr_char in letters:
             stmt_str += self.curr_char
             self.advance()
-        return stmt_str 
+        if stmt_str == "log":
+            return (LOG, stmt_str)
+        else:
+            return (STRING, stmt_str)
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -89,45 +99,59 @@ class Parser:
     def advance(self):
         self.index += 1
         self.curr_token = self.tokens[self.index] if self.index < len(self.tokens) else None
+
     def parse(self):
-        while self.curr_token is not None:
-            self.expr()
-            self.term()
-            self.Print()
-            self.advance()
-        return self.tokens
-    def Print(self):
-        if self.curr_token == "log":
-            content= self.tokens[self.index+1]
-            print(content)
-    def term(self):
-        if self.curr_token == PLUS:
-            left_num = self.tokens[self.index - 1]
-            right_num = self.tokens[self.index + 1]
-            result = left_num + right_num
-            self.tokens = self.tokens[:self.index - 1] + [result] + self.tokens[self.index + 2:]
-            self.index -= 1
-        elif self.curr_token == MINUS:
-            left_num = self.tokens[self.index - 1]
-            right_num = self.tokens[self.index + 1]
-            result = left_num - right_num
-            self.tokens = self.tokens[:self.index - 1] + [result] + self.tokens[self.index + 2:]
-            self.index -= 1
+        result = self.expr()
+        if self.curr_token is not None:
+            raise ValueError("Unexpected token at end of input")
+        return result
+
     def expr(self):
-        if self.curr_token == MUL:
-            left_num = self.tokens[self.index - 1]
-            right_num = self.tokens[self.index + 1]
-            result = left_num * right_num
-            self.tokens = self.tokens[:self.index - 1] + [result] + self.tokens[self.index + 2:]
-            self.index -= 1
-        if self.curr_token == DIV:
-            left_num = self.tokens[self.index - 1]
-            right_num = self.tokens[self.index + 1]
-            result = left_num / right_num
-            self.tokens = self.tokens[:self.index - 1] + [result] + self.tokens[self.index + 2:]
-            self.index -= 1
+        result = self.term()
+        while self.curr_token is not None and self.curr_token[0] in (PLUS, MINUS):
+            if self.curr_token[0] == PLUS:
+                self.advance()
+                result += self.term()
+            elif self.curr_token[0] == MINUS:
+                self.advance()
+                result -= self.term()
+        return result
+
+    def term(self):
+        result = self.factor()
+        while self.curr_token is not None and self.curr_token[0] in (MUL, DIV):
+            if self.curr_token[0] == MUL:
+                self.advance()
+                result *= self.factor()
+            elif self.curr_token[0] == DIV:
+                self.advance()
+                result /= self.factor()
+        return result
+
+    def factor(self):
+        if self.curr_token[0] == NUMBER:
+            result = self.curr_token[1]
+            self.advance()
+            return result
+        elif self.curr_token[0] == OPAREN:
+            self.advance()
+            result = self.expr()
+            if self.curr_token[0] != CPAREN:
+                raise ValueError("Expected closing parenthesis")
+            self.advance()
+            return result
+        elif self.curr_token[0] == LOG:
+            self.advance()
+            if self.curr_token[0] != STRING:
+                raise ValueError("Expected string after 'log'")
+            print(self.curr_token[1])
+            self.advance()
+            return None
+        else:
+            raise ValueError(f"Unexpected token: {self.curr_token}")
 lexer = Lexer(x)
 tokens = lexer.tokenize()
 parser = Parser(tokens)
 result = parser.parse()
-print(result)
+if result is not None:
+    print(result)
