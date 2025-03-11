@@ -1,5 +1,5 @@
 # PyParse
-An opensource Interpreter Made in python from scratch
+An opensource Interpreter Made in python from scratch, and its still a work in progress
 # Lead Contributors
 - Mohammed abdelkafi
 - the V_code team
